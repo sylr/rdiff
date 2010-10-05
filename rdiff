@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+# vim: set tabstop=4 expandtab autoindent smartindent:
+# author: Sylvain Rabot <sylvain@abstraction.fr>
+# date: 05/10/2010
+# license: lgpl
+
+# -- die function --------------------------------------------------------------
+
+die()
+{
+    echo >&2 $1;
+    
+    if test -z "$2"; then
+        exit 1
+    else
+        exit $2
+    fi
+}
+
+# -- bash completion -----------------------------------------------------------
+
+if [ -f "~/.bash_completion" ]; then
+    IS_COMPLETED_ALREADY=$(cat "~/.bash_completion" | grep rdiff)
+    
+    if [ -z "$IS_COMPLETED_ALREADY" ]; then
+        (echo ""; echo "complete -F _ssh rdiff") >> ~/.bash_completion
+    fi
+elif [ -f "/etc/bash_completion" ]; then
+    echo "complete -F _ssh rdiff" >> ~/.bash_completion
+fi
+
+# ------------------------------------------------------------------------------
+
+SOURCE_INPUT=$1
+TARGET_INPUT=$2
+PAGER=less
+
+IS_SOURCE_INPUT_REMOTE=$(echo $SOURCE_INPUT | grep -iE "^[a-z0-9@-_@.]+:.*")
+IS_TARGET_INPUT_REMOTE=$(echo $TARGET_INPUT | grep -iE "^[a-z0-9@-_@.]+:.*")
+
+if [ -n "$IS_SOURCE_INPUT_REMOTE" ]; then
+    SOURCE_INPUT_HOST=$(echo "$SOURCE_INPUT" | cut -d ':' -f1)
+    SOURCE_INPUT_PATH=$(echo "$SOURCE_INPUT" | cut -d ':' -f2,3,4,5,6,7,8,9)
+elif [ -f $SOURCE_INPUT ]; then
+    SOURCE_INPUT_HOST=""
+    SOURCE_INPUT_PATH=$SOURCE_INPUT
+else
+    die "$SOURCE_INPUT neither a local or a remote file"
+fi
+
+if [ -n "$IS_TARGET_INPUT_REMOTE" ]; then
+    TARGET_INPUT_HOST=$(echo "$TARGET_INPUT" | cut -d ':' -f1)
+    TARGET_INPUT_PATH=$(echo "$TARGET_INPUT" | cut -d ':' -f2,3,4,5,6,7,8,9)
+elif [ -f $TARGET_INPUT ]; then
+    TARGET_INPUT_HOST=""
+    TARGET_INPUT_PATH=$TARGET_INPUT
+else
+    die "$TARGET_INPUT neither a local or a remote file"
+fi
+
+# both remote files
+if [ -n "$SOURCE_INPUT_HOST" -a -n "$TARGET_INPUT_HOST" ]; then
+    SOURCE_INPUT_TEMP=$(tempfile -p rdiff -s "-source")
+    TARGET_INPUT_TEMP=$(tempfile -p rdiff -s "-target")
+    
+    ssh $SOURCE_INPUT_HOST cat $SOURCE_INPUT_PATH > $SOURCE_INPUT_TEMP
+    ssh $TARGET_INPUT_HOST cat $TARGET_INPUT_PATH > $TARGET_INPUT_TEMP
+    
+    diff -u $SOURCE_INPUT_TEMP $TARGET_INPUT_TEMP | $PAGER
+    
+    rm $SOURCE_INPUT_TEMP $TARGET_INPUT_TEMP
+# only source is a remote file
+elif [ -n "$SOURCE_INPUT_HOST" ]; then
+    SOURCE_INPUT_TEMP=$(tempfile -p rdiff -s "-source")
+    
+    ssh $SOURCE_INPUT_HOST cat $SOURCE_INPUT_PATH > $SOURCE_INPUT_TEMP
+    
+    diff -u "$SOURCE_INPUT_TEMP" "$TARGET_INPUT_PATH" | $PAGER
+    
+    rm $SOURCE_INPUT_TEMP
+# only target is a remote file
+elif [ -n "$TARGET_INPUT_HOST" ]; then
+    TARGET_INPUT_TEMP=$(tempfile -p rdiff -s "-target")
+    
+    ssh $TARGET_INPUT_HOST cat $TARGET_INPUT_PATH > $TARGET_INPUT_TEMP
+    
+    diff -u $SOURCE_INPUT_PATH $TARGET_INPUT_TEMP | $PAGER
+    
+    rm $SOURCE_INPUT_TEMP
+else
+    die "duh ..."
+fi
+
