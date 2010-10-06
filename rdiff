@@ -133,6 +133,6 @@ elif [ -n "$TARGET_INPUT_HOST" ]; then
     
     rm $SOURCE_INPUT_TEMP
 else
-    die "duh ..."
+    diff $DIFF_MODE $NO_WHITESPACE $NO_CASE_CHANGE $SOURCE_INPUT_PATH $TARGET_INPUT_PATH | $PAGER
 fi
 
