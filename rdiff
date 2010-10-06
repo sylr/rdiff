@@ -35,6 +35,15 @@ EOF
     exit;
 }
 
+# -- tests ---------------------------------------------------------------------
+
+[ `which diff` ]        || die "rdiff needs diff to be installed"
+[ `which less` ]        || die "rdiff needs less to be installed"
+[ `which tempfile` ]    || die "rdiff needs tempfile to be installed"
+[ `which ssh` ]         || die "rdiff needs ssh to be installed"
+[ `which grep` ]        || die "rdiff needs grep to be installed"
+[ `which getopt` ]      || die "rdiff needs getopt to be installed"
+
 # -- bash completion -----------------------------------------------------------
 
 if [ -f "~/.bash_completion" ]; then
