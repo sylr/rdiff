@@ -8,9 +8,11 @@
 
 die()
 {
-    echo >&2 $1;
-    
-    if test -z "$2"; then
+    if [ -n "$1" ]; then
+        echo >&2 $1;
+    fi
+
+    if [ -z "$2" ]; then
         exit 1
     else
         exit $2
