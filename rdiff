@@ -17,6 +17,21 @@ die()
     fi
 }
 
+# -- usage function ------------------------------------------------------------
+
+usage()
+{
+    cat <<EOF
+Usage: `basename $0` [options] <source> <target>
+
+Options:
+  -w            ignore case differences in file contents
+  --no-pager    do not use pager to display output
+EOF
+
+    exit;
+}
+
 # -- bash completion -----------------------------------------------------------
 
 if [ -f "~/.bash_completion" ]; then
