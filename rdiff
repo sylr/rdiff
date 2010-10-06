@@ -25,8 +25,11 @@ usage()
 Usage: `basename $0` [options] <source> <target>
 
 Options:
+  -i            ignore all white space
   -w            ignore case differences in file contents
+  -y            Output in two columns
   --no-pager    do not use pager to display output
+  -h/--help     show this help
 EOF
 
     exit;
@@ -44,14 +47,41 @@ elif [ -f "/etc/bash_completion" ]; then
     echo "complete -F _ssh rdiff" >> ~/.bash_completion
 fi
 
+# -- default values ------------------------------------------------------------
+
+PAGER=less
+DIFF_MODE="-u"
+
+# -- arguments parsing ---------------------------------------------------------
+
+ARGV=`getopt -o w,i,y,h --long no-pager,help -n "$0" -- $0 $@`
+
+if [ $? != 0 ] ; then
+    die "Terminating ...";
+fi
+
+eval set -- "$ARGV"
+
+while true;
+do
+    case "$1" in
+        -w)             NO_WHITESPACE="-w";         shift;;
+        -i)             NO_CASE_CHANGE="-i";        shift;;
+        -y)             DIFF_MODE="-y";             shift;;
+        --no-pager)     PAGER=cat;                  shift;;
+        -h|--help)      usage;;
+        --)             shift;                      break;;
+        *)              die "Oops ...";;
+    esac
+done
+
 # ------------------------------------------------------------------------------
 
-SOURCE_INPUT=$1
-TARGET_INPUT=$2
-PAGER=less
+SOURCE_INPUT=$2
+TARGET_INPUT=$3
 
-IS_SOURCE_INPUT_REMOTE=$(echo $SOURCE_INPUT | grep -iE "^[a-z0-9@-_@.]+:.*")
-IS_TARGET_INPUT_REMOTE=$(echo $TARGET_INPUT | grep -iE "^[a-z0-9@-_@.]+:.*")
+IS_SOURCE_INPUT_REMOTE=$(echo "$SOURCE_INPUT" | grep -iE "^[a-z0-9@-_\.]+:.*")
+IS_TARGET_INPUT_REMOTE=$(echo "$TARGET_INPUT" | grep -iE "^[a-z0-9@-_\.]+:.*")
 
 if [ -n "$IS_SOURCE_INPUT_REMOTE" ]; then
     SOURCE_INPUT_HOST=$(echo "$SOURCE_INPUT" | cut -d ':' -f1)
@@ -81,7 +111,7 @@ if [ -n "$SOURCE_INPUT_HOST" -a -n "$TARGET_INPUT_HOST" ]; then
     ssh $SOURCE_INPUT_HOST cat $SOURCE_INPUT_PATH > $SOURCE_INPUT_TEMP
     ssh $TARGET_INPUT_HOST cat $TARGET_INPUT_PATH > $TARGET_INPUT_TEMP
     
-    diff -u $SOURCE_INPUT_TEMP $TARGET_INPUT_TEMP | $PAGER
+    diff $DIFF_MODE $NO_WHITESPACE $NO_CASE_CHANGE $SOURCE_INPUT_TEMP $TARGET_INPUT_TEMP | $PAGER
     
     rm $SOURCE_INPUT_TEMP $TARGET_INPUT_TEMP
 # only source is a remote file
@@ -90,7 +120,7 @@ elif [ -n "$SOURCE_INPUT_HOST" ]; then
     
     ssh $SOURCE_INPUT_HOST cat $SOURCE_INPUT_PATH > $SOURCE_INPUT_TEMP
     
-    diff -u "$SOURCE_INPUT_TEMP" "$TARGET_INPUT_PATH" | $PAGER
+    diff $DIFF_MODE $NO_WHITESPACE $NO_CASE_CHANGEE "$SOURCE_INPUT_TEMP" "$TARGET_INPUT_PATH" | $PAGER
     
     rm $SOURCE_INPUT_TEMP
 # only target is a remote file
@@ -99,7 +129,7 @@ elif [ -n "$TARGET_INPUT_HOST" ]; then
     
     ssh $TARGET_INPUT_HOST cat $TARGET_INPUT_PATH > $TARGET_INPUT_TEMP
     
-    diff -u $SOURCE_INPUT_PATH $TARGET_INPUT_TEMP | $PAGER
+    diff $DIFF_MODE $NO_WHITESPACE $NO_CASE_CHANGE $TARGET_INPUT_TEMP | $PAGER
     
     rm $SOURCE_INPUT_TEMP
 else
