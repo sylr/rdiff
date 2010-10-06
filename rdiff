@@ -29,7 +29,7 @@ Usage: `basename $0` [options] <source> <target>
 Options:
   -i            ignore all white space
   -w            ignore case differences in file contents
-  -y            Output in two columns
+  -y            output in two columns
   --no-pager    do not use pager to display output
   -h/--help     show this help
 EOF
