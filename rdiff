@@ -91,8 +91,8 @@ done
 SOURCE_INPUT=$2
 TARGET_INPUT=$3
 
-IS_SOURCE_INPUT_REMOTE=$(echo "$SOURCE_INPUT" | grep -iE "^[a-z0-9@-_\.]+:.*")
-IS_TARGET_INPUT_REMOTE=$(echo "$TARGET_INPUT" | grep -iE "^[a-z0-9@-_\.]+:.*")
+IS_SOURCE_INPUT_REMOTE=$(echo "$SOURCE_INPUT" | grep -iE "^[a-z0-9_-@\.]+:.*")
+IS_TARGET_INPUT_REMOTE=$(echo "$TARGET_INPUT" | grep -iE "^[a-z0-9_-@\.]+:.*")
 
 if [ -n "$IS_SOURCE_INPUT_REMOTE" ]; then
     SOURCE_INPUT_HOST=$(echo "$SOURCE_INPUT" | cut -d ':' -f1)
