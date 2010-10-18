@@ -8,10 +8,12 @@
 
 die()
 {
+    # error message
     if [ -n "$1" ]; then
         echo >&2 $1;
     fi
 
+    # error code
     if [ -z "$2" ]; then
         exit 1
     else
